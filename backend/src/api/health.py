@@ -19,6 +19,25 @@ class HealthResponse(BaseModel):
 
 
 @router.get(
+    "/",
+    response_model=HealthResponse,
+    summary="Root",
+    description="Root endpoint for HuggingFace health check. Returns service status.",
+    include_in_schema=False,
+)
+async def root() -> HealthResponse:
+    """Root endpoint for HuggingFace Spaces health check.
+
+    Returns basic service information to verify the API is running.
+    This is required for HuggingFace Spaces to detect the app is ready.
+
+    Returns:
+        HealthResponse: Service health status
+    """
+    return HealthResponse()
+
+
+@router.get(
     "/health",
     response_model=HealthResponse,
     summary="Health Check",
