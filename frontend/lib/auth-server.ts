@@ -1,16 +1,13 @@
 import { betterAuth } from 'better-auth';
-import { Pool } from 'pg';
+import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { prisma } from './db';
 
-// Create PostgreSQL connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-
-// Better Auth server configuration with PostgreSQL persistence
+// Better Auth server configuration with Prisma adapter (serverless-compatible)
 export const auth = betterAuth({
-  // Database - using direct PostgreSQL connection
-  database: pool,
+  // Database - using Prisma adapter for serverless environments (Vercel)
+  database: prismaAdapter(prisma, {
+    provider: 'postgresql',
+  }),
 
   // Secret for signing tokens
   secret: process.env.BETTER_AUTH_SECRET || 'development-secret-change-in-production',
