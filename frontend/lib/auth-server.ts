@@ -31,9 +31,11 @@ export const auth = betterAuth({
     },
   },
 
-  // Trusted origins for CORS
+  // Trusted origins for CORS - include production URLs
   trustedOrigins: [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    ...(process.env.NEXT_PUBLIC_AUTH_URL ? [process.env.NEXT_PUBLIC_AUTH_URL] : []),
+    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
   ],
 });
