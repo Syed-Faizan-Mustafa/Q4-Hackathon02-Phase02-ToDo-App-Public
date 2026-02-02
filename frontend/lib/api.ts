@@ -30,15 +30,11 @@ api.interceptors.response.use(
       _retryCount?: number;
     };
 
-    // Handle 401 - redirect to signin
     const status = error.response?.status;
-    if (status === 401 && typeof window !== 'undefined') {
-      // Clear any cached auth state and redirect
-      window.location.href = '/signin';
-      return Promise.reject(error);
-    }
 
-    // Don't retry on client errors (4xx)
+    // Don't retry on client errors (4xx) - let components handle auth redirects
+    // NOTE: 401 handling is done by React components (useAuth hook), not here
+    // This prevents redirect loops when session checks happen on unauthenticated pages
     if (status && status >= 400 && status < 500) {
       return Promise.reject(error);
     }
