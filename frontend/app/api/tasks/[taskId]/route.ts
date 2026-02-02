@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { auth } from '@/lib/auth-server';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-// Helper to get session token from cookies
-async function getSessionToken(): Promise<string | null> {
-  const cookieStore = await cookies();
-  // Better Auth stores the session token in this cookie as "token.signature"
-  // We need to extract just the token part (before the dot) for database lookup
-  const sessionCookie = cookieStore.get('better-auth.session_token');
-  if (!sessionCookie?.value) return null;
-
-  // Extract the token part (before the signature)
-  const tokenParts = sessionCookie.value.split('.');
-  return tokenParts[0] || null;
+// Helper to get session using Better Auth's API
+async function getSession(request: NextRequest) {
+  try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    return session;
+  } catch (error) {
+    console.error('Error getting session:', error);
+    return null;
+  }
 }
 
 // GET /api/tasks/[taskId] - Get a single task
@@ -23,9 +23,9 @@ export async function GET(
 ) {
   try {
     const { taskId } = await params;
-    const token = await getSessionToken();
+    const session = await getSession(request);
 
-    if (!token) {
+    if (!session?.session?.token) {
       return NextResponse.json(
         { error: 'Unauthorized', message: 'No session token found' },
         { status: 401 }
@@ -35,7 +35,7 @@ export async function GET(
     const response = await fetch(`${API_BASE_URL}/api/v1/tasks/${taskId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${session.session.token}`,
         'Content-Type': 'application/json',
       },
     });
@@ -63,9 +63,9 @@ export async function PUT(
 ) {
   try {
     const { taskId } = await params;
-    const token = await getSessionToken();
+    const session = await getSession(request);
 
-    if (!token) {
+    if (!session?.session?.token) {
       return NextResponse.json(
         { error: 'Unauthorized', message: 'No session token found' },
         { status: 401 }
@@ -77,7 +77,7 @@ export async function PUT(
     const response = await fetch(`${API_BASE_URL}/api/v1/tasks/${taskId}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${session.session.token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -106,9 +106,9 @@ export async function PATCH(
 ) {
   try {
     const { taskId } = await params;
-    const token = await getSessionToken();
+    const session = await getSession(request);
 
-    if (!token) {
+    if (!session?.session?.token) {
       return NextResponse.json(
         { error: 'Unauthorized', message: 'No session token found' },
         { status: 401 }
@@ -120,7 +120,7 @@ export async function PATCH(
     const response = await fetch(`${API_BASE_URL}/api/v1/tasks/${taskId}`, {
       method: 'PATCH',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${session.session.token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -149,9 +149,9 @@ export async function DELETE(
 ) {
   try {
     const { taskId } = await params;
-    const token = await getSessionToken();
+    const session = await getSession(request);
 
-    if (!token) {
+    if (!session?.session?.token) {
       return NextResponse.json(
         { error: 'Unauthorized', message: 'No session token found' },
         { status: 401 }
@@ -161,7 +161,7 @@ export async function DELETE(
     const response = await fetch(`${API_BASE_URL}/api/v1/tasks/${taskId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${session.session.token}`,
         'Content-Type': 'application/json',
       },
     });
